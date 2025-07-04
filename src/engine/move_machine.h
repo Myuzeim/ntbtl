@@ -37,6 +37,12 @@ namespace MoveMachine {
             // state functions
             static const Out _idle(StateMachine<In,Out>* sm, const In& in);
             static const Out _moving(StateMachine<In,Out>* sm, const In& in);
+
+            // state enum
+            enum State : uint8_t {
+                IDLE,
+                MOVING
+            };
             
             //helpers
             bool _canMoveFar(const uint8_t& py) {return (py < (TILE_HEIGHT / 2) + TILE_HEIGHT * 2);};
@@ -49,6 +55,11 @@ namespace MoveMachine {
             static const uint8_t TILE_WIDTH = 60;
             static const uint8_t TILE_HEIGHT = 80;
             Machine();
+            size_t serialize(char* addr);
+
+            //deserialize
+            //size param is modified to increment the size of the object created
+            Machine(char* addr, size_t& size);
     };
 };
 

@@ -33,9 +33,33 @@ static const Uint32 interval = 34;
 static const int WINDOW_WIDTH = 1600;
 static const int WINDOW_HEIGHT = 900;
 
-
 Uint32 GameLoop(void *userdata, SDL_TimerID timerID, Uint32 interval) {
+    
+    // test serializing and deserializing
+    // will game two have the same output in parallel?
+    char inputRegister[512];
+    size_t inputRegisterActive = 0;
+    game.serialize(inputRegister);
+    GameMachine::Machine game2(inputRegister,inputRegisterActive);
+    game2.step(gameIn);
+
+
+    /////////// The big step
     data = game.step(gameIn);
+    ///////////
+
+    //ok, now check the results
+    char outputRegister1[512], outputRegister2[512];
+    size_t outputLength = game.serialize(outputRegister1);
+    game2.serialize(outputRegister2);
+
+    if(memcmp(outputRegister1,outputRegister2,outputLength))
+    {
+        //desync
+        SDL_Log("Serialization error!");
+    }
+
+    
     return interval;
 }
 

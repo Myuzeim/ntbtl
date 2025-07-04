@@ -32,9 +32,21 @@ namespace AttackMachine {
             static const Out _idle(StateMachine<In,Out>* sm, const In& in);
             static const Out _windup(StateMachine<In,Out>* sm, const In& in);
             static const Out _follow(StateMachine<In,Out>* sm, const In& in);
+
+            // state enums;
+            enum State : uint8_t {
+                IDLE,
+                WINDUP,
+                FOLLOW
+            };
+            
         public:
             Machine();
             void reset();
+            size_t serialize(char* addr);
+            //deserialize
+            //size param is modified to increment the size of the object created
+            Machine(char* addr, size_t& size);
     };
 };
 

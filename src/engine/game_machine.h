@@ -43,7 +43,6 @@ namespace GameMachine {
                 ret.player2Data = m->_player2.step(player2In);
 
                 //hit scan
-                // think this doesnt reflect right?
                 if(ret.player1Data.hitY + ret.player1Data.py >= ret.player2Data.py + MoveMachine::Machine::TILE_HEIGHT && ret.player1Data.hitY + ret.player1Data.py <= ret.player2Data.py + 2 * MoveMachine::Machine::TILE_HEIGHT)
                 {
                     uint8_t real2Px = 4 * MoveMachine::Machine::TILE_WIDTH - ret.player2Data.px;
@@ -66,14 +65,71 @@ namespace GameMachine {
 
                 return ret;
             };
+
+            // State Enum
+            enum State : uint8_t {
+                UNIVERSAL
+            };
             
         public:
             Machine() {
                 _player1hp = 100;
                 _player2hp = 100;
-                _changeState(this, _universal);
+                _changeState(this, _universal,UNIVERSAL);
             };
             
+            size_t serialize(char* addr) {
+                size_t offset = 0;
+                State sEnum = (State) _currentEnum();
+                memcpy(addr,&sEnum,sizeof(sEnum));
+                offset+=sizeof(sEnum);
+
+                uint8_t frame = _currentFrame();
+                memcpy(addr+offset,&frame,sizeof(frame));
+                offset+=sizeof(frame);
+
+                memcpy(addr+offset,&_player1hp,sizeof(_player1hp));
+                offset+=sizeof(_player1hp);
+
+                memcpy(addr+offset,&_player2hp,sizeof(_player2hp));
+                offset+=sizeof(_player2hp);
+
+                offset += _player1.serialize(addr+offset);
+                offset += _player2.serialize(addr+offset);
+                offset += _player1Input.serialize(addr+offset);
+                offset += _player2Input.serialize(addr+offset);
+
+                return offset;
+            };
+
+            //deserialize
+            //size param is modified to increment the size of the object created
+            Machine(char* addr, size_t& size) {
+                State sEnum = *reinterpret_cast<State*>(addr+size);
+                size += sizeof(sEnum);
+                switch(sEnum) {
+                    case UNIVERSAL:
+                        _changeState(this,_universal,UNIVERSAL);
+                        break;
+                    default:
+                        break; //error!
+                };
+
+                uint8_t frame = *reinterpret_cast<uint8_t*>(addr+size);
+                size += sizeof(sEnum);
+                _changeFrameOnly(frame);
+
+                _player1hp = *reinterpret_cast<uint8_t*>(addr+size);
+                size += sizeof(_player1hp);
+
+                _player2hp = *reinterpret_cast<uint8_t*>(addr+size);
+                size += sizeof(_player2hp);
+
+                _player1 = PlayerMachine::Machine(addr,size);
+                _player2 = PlayerMachine::Machine(addr,size);
+                _player1Input = InputMachine::Machine(addr,size);
+                _player2Input = InputMachine::Machine(addr,size);
+            };
     };
 };
 

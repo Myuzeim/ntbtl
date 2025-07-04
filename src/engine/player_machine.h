@@ -56,7 +56,7 @@ namespace PlayerMachine {
                         AttackMachine::In attackIn;
                         attackIn.keys = in.keys;
                         AttackMachine::Out attackOut = m->_attackMachine.step(attackIn);
-                        if(attackOut.sprite != "Idle") {
+                        if(!strcmp(attackOut.sprite.c_str(),"Idle")) {
                             ret.sprite = attackOut.sprite;
                             ret.hitStartX = attackOut.hitStartX;
                             ret.hitEndX = attackOut.hitEndX;
@@ -85,11 +85,65 @@ namespace PlayerMachine {
                 return ret;
             };
 
+            // state enum
+            enum State : uint8_t {
+                UNIVERSAL
+            };
+
         public:
             Machine() {
                 _px = (MoveMachine::Machine::TILE_WIDTH / 2) * 3;
                 _py = (MoveMachine::Machine::TILE_HEIGHT / 2) * 3;
-                _changeState(this, _universal);
+                _changeState(this, _universal,UNIVERSAL);
+            };
+            //deserialize
+            //size param is modified to increment the size of the object created
+            Machine(char* addr, size_t& size) {
+                State sEnum = *reinterpret_cast<State*>(addr+size);
+                size += sizeof(sEnum);
+                switch(sEnum) {
+                    case UNIVERSAL:
+                        _changeState(this,_universal,UNIVERSAL);
+                        break;
+                    default:
+                        break; //error!
+                };
+
+                uint8_t frame = *reinterpret_cast<uint8_t*>(addr+size);
+                size += sizeof(frame);
+                _changeFrameOnly(frame);
+
+                _px = *reinterpret_cast<uint8_t*>(addr+size);
+                size += sizeof(_px);
+
+                _py = *reinterpret_cast<uint8_t*>(addr+size);
+                size += sizeof(_py);
+
+                _moveMachine = MoveMachine::Machine(addr,size);
+                _blockMachine = BlockMachine::Machine(addr,size);
+                _attackMachine = AttackMachine::Machine(addr,size);
+            };
+            size_t serialize(char* addr) {
+                size_t offset = 0;
+                State sEnum = (State) _currentEnum();
+                memcpy(addr,&sEnum,sizeof(sEnum));
+                offset+=sizeof(sEnum);
+
+                uint8_t frame = _currentFrame();
+                memcpy(addr+offset,&frame,sizeof(frame));
+                offset+=sizeof(frame); 
+
+                memcpy(addr+offset,&_px,sizeof(_px));
+                offset+=sizeof(_px);
+
+                memcpy(addr+offset,&_py,sizeof(_py));
+                offset+=sizeof(_py);
+
+                offset += _moveMachine.serialize(addr+offset);
+                offset += _blockMachine.serialize(addr+offset);
+                offset += _attackMachine.serialize(addr+offset);
+
+                return offset;
             };
     };
 };

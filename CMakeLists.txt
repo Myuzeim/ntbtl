@@ -20,7 +20,9 @@ add_library(engine STATIC
     src/engine/block_machine.h)
 
 include_directories(src/engine)
-add_executable(ntbtl src/front/main.cpp)
+add_executable(ntbtl src/front/main.cpp
+    src/front/key_reader.h 
+    src/front/key_writer.h)
 
 target_link_libraries(ntbtl PUBLIC engine)
 target_link_libraries(ntbtl PRIVATE SDL3::SDL3)

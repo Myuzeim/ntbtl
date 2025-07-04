@@ -11,6 +11,8 @@
 #include <iostream>
 #include <string>
 #include <format>
+#include "key_writer.h"
+#include "key_reader.h"
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
@@ -27,6 +29,9 @@ static GameMachine::Out data;
 static TTF_TextEngine* engine = NULL;
 static TTF_Font* font = NULL;
 static TTF_Text* text = NULL;
+static KeyWriter file1Out, file2Out;
+static KeyReader file1In, file2In;
+static bool fromFile = false;
 
 static const Uint32 interval = 34;
 
@@ -44,9 +49,21 @@ Uint32 GameLoop(void *userdata, SDL_TimerID timerID, Uint32 interval) {
     game2.step(gameIn);
 
 
-    /////////// The big step
-    data = game.step(gameIn);
-    ///////////
+    if(!fromFile) {
+        //write to a file
+        file1Out.line(gameIn.player1Keys);
+        file2Out.line(gameIn.player2Keys);
+
+        /////////// The big step
+        data = game.step(gameIn);
+        ///////////
+    } else {
+        //read from a file
+        gameIn.player1Keys = file1In.line();
+        gameIn.player2Keys = file2In.line();
+
+        data = game.step(gameIn);
+    }
 
     //ok, now check the results
     char outputRegister1[512], outputRegister2[512];
@@ -64,8 +81,21 @@ Uint32 GameLoop(void *userdata, SDL_TimerID timerID, Uint32 interval) {
 }
 
 /* This function runs once at startup. */
+// arg1 is 'w' or 'r'
+// arg2 is filepath for player 1
+// arg3 is filepath for player 2
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
 {
+    if(!strcmp(argv[1],"r")){
+        fromFile = true;
+        file1In.init(argv[2]);
+        file2In.init(argv[3]);
+    } else {
+        file1Out.init(argv[2]);
+        file2Out.init(argv[3]);
+    }
+
+
     SDL_SetAppMetadata("ntbtl", "1.0", "ntbtl");
 
     if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -293,6 +323,14 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 /* This function runs once at shutdown. */
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
+    if(fromFile){
+        file1In.finish();
+        file2In.finish();
+    } else {
+        file1Out.finish();
+        file2Out.finish();
+    }
+
     TTF_DestroyRendererTextEngine(engine);
     TTF_DestroyText(text);
     TTF_CloseFont(font);

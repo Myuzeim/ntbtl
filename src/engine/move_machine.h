@@ -1,0 +1,55 @@
+#ifndef MOVE_MACHINE_H
+#define MOVE_MACHINE_H
+
+#include "state_machine.h"
+#include "input_machine.h"
+#include <functional>
+
+//Describes the position of the character and if it is in movement
+namespace MoveMachine {
+    struct In {
+        InputMachine::Out keys;
+        uint8_t px, py;
+    };  
+    struct Out {
+        uint8_t px, py;
+        bool inMove;
+        bool movingBack;
+    };
+    
+    class Machine : public StateMachine<In,Out> {
+        private:
+            //consts
+            //higher = slower
+            static const uint8_t VERT_SPEED = 5;
+            static const uint8_t HORI_SPEED = 10;
+            static const uint8_t DIAG_SPEED = 12;
+
+            //vars
+            uint8_t _moveFrames;
+            uint8_t _srcX;
+            uint8_t _srcY;
+            uint8_t _dstX;
+            uint8_t _dstY;
+            bool _movingBack;
+
+
+            // state functions
+            static const Out _idle(StateMachine<In,Out>* sm, const In& in);
+            static const Out _moving(StateMachine<In,Out>* sm, const In& in);
+            
+            //helpers
+            bool _canMoveFar(const uint8_t& py) {return (py < (TILE_HEIGHT / 2) + TILE_HEIGHT * 2);};
+            bool _canMoveNear(const uint8_t& py) {return (py > TILE_HEIGHT / 2);};
+            bool _canMoveForw(const uint8_t& px) {return (px < (TILE_WIDTH / 2) + TILE_WIDTH);};
+            bool _canMoveBack(const uint8_t& px) {return (px > TILE_WIDTH / 2);};
+
+
+        public:
+            static const uint8_t TILE_WIDTH = 60;
+            static const uint8_t TILE_HEIGHT = 80;
+            Machine();
+    };
+};
+
+#endif //MOVE_MACHINE_H

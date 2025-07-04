@@ -17,6 +17,7 @@ namespace PlayerMachine {
         uint8_t px, py;
         std::string sprite;
         uint8_t hitStartX, hitEndX, hitY;
+        bool blocking;
     };
 
     class Machine : public StateMachine<In,Out> {
@@ -46,7 +47,10 @@ namespace PlayerMachine {
                 BlockMachine::Out blockOut = m->_blockMachine.step(blockIn);
                 
                 
-                
+                ret.blocking = false;
+                ret.hitEndX = 0;
+                ret.hitStartX = 0;
+                ret.hitY = 0;
                 if(moveOut.inMove) {
                     if(!moveOut.movingBack) {
                         AttackMachine::In attackIn;
@@ -62,9 +66,11 @@ namespace PlayerMachine {
                         }
                     } else {
                         ret.sprite = "Move";
+                        ret.blocking = true;
                     }
                 } else if(blockOut.blocking) {
                     ret.sprite = "Block";
+                    ret.blocking = true;
                 } else {
                     AttackMachine::In attackIn;
                     attackIn.keys = in.keys;

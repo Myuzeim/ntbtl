@@ -48,14 +48,18 @@ namespace GameMachine {
                 {
                     uint8_t real2Px = 4 * MoveMachine::Machine::TILE_WIDTH - ret.player2Data.px;
                     if(real2Px > ret.player1Data.px + ret.player1Data.hitStartX && real2Px < ret.player1Data.px + ret.player1Data.hitEndX)
-                        m->_player2hp -= 10;
+                        if(!ret.player2Data.blocking)
+                            if(!(ret.player1Data.hitEndX == 0 && ret.player1Data.hitStartX && ret.player1Data.hitY)) //is there even an attack? 
+                                m->_player2hp -= 10;
                 }
                 if(ret.player2Data.hitY + ret.player2Data.py >= ret.player1Data.py + MoveMachine::Machine::TILE_HEIGHT && ret.player2Data.hitY + ret.player2Data.py <= ret.player1Data.py + 2 * MoveMachine::Machine::TILE_HEIGHT)
                 {
                     uint8_t real2PxStart = 4 * MoveMachine::Machine::TILE_WIDTH - std::min(240,ret.player2Data.px + ret.player2Data.hitEndX);
                     uint8_t real2PxEnd = 4 * MoveMachine::Machine::TILE_WIDTH - std::min(240,ret.player2Data.px + ret.player2Data.hitStartX);
                     if(ret.player1Data.px > real2PxStart && ret.player1Data.px < real2PxEnd)
-                        m->_player1hp -= 10;
+                        if(!ret.player1Data.blocking)
+                            if(!(ret.player2Data.hitEndX == 0 && ret.player2Data.hitStartX && ret.player2Data.hitY)) //is there even an attack?
+                                m->_player1hp -= 10;
                 }
                 ret.player1hp = m->_player1hp;
                 ret.player2hp = m->_player2hp;

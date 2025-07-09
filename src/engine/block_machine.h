@@ -10,13 +10,21 @@ namespace BlockMachine {
     };
     struct Out {
         bool blocking;
+        void clear() {
+            blocking = false;
+        }
     };
 
     class Machine : public StateMachine<In,Out> {
         private:
+            //vars
+            Out _ret;
+
             // state functions
-            static const Out _universal(StateMachine<In,Out>* sm, const In& in) {
-                return {in.keys.Back() || in.movingBack};
+            static const Out& _universal(StateMachine<In,Out>* sm, const In& in) {
+                Machine* m = reinterpret_cast<Machine*>(sm);
+                m->_ret = {in.keys.Back() || in.movingBack};
+                return m->_ret;
             };
 
             // state enums
@@ -32,12 +40,8 @@ namespace BlockMachine {
             size_t serialize(char* addr) {
                 size_t offset = 0;
                 State sEnum = (State) _currentEnum();
-                memcpy(addr,&sEnum,sizeof(sEnum));
-                offset+=sizeof(sEnum);
-
-                uint8_t frame = _currentFrame();
-                memcpy(addr+offset,&frame,sizeof(frame));
-                offset+=sizeof(frame); 
+                offset += serializeBytes(addr+offset, sEnum);
+                offset += serializeBytes(addr+offset,_currentFrame());
 
                 return offset;
             }

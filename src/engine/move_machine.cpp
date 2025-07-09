@@ -7,8 +7,9 @@ namespace MoveMachine {
         _changeState(this,_idle,IDLE);
     };
 
-    const Out Machine::_idle(StateMachine<In,Out>* sm, const In& in) {
+    const Out& Machine::_idle(StateMachine<In,Out>* sm, const In& in) {
         Machine* m = static_cast<Machine*>(sm);
+        m->_ret.clear();
         if(in.keys.Back() && m->_canMoveBack(in.px)) {
             m->_movingBack = true;
             if(in.keys.keys.Move1 && m->_canMoveNear(in.py)) {
@@ -18,7 +19,12 @@ namespace MoveMachine {
                 m->_srcY = in.py;
                 m->_dstY = in.py - TILE_HEIGHT;
                 m->_changeState(m, _moving, MOVING);
-                return {m->_srcX,m->_srcY,true,m->_movingBack};
+                
+                m->_ret.px = m->_srcX;
+                m->_ret.py = m->_srcY;
+                m->_ret.inMove = true;
+                m->_ret.movingBack = m->_movingBack;
+                return m->_ret;
             } else if(in.keys.keys.Move7 && m->_canMoveFar(in.py)) {
                 m->_moveFrames = DIAG_SPEED;
                 m->_srcX = in.px;
@@ -26,7 +32,12 @@ namespace MoveMachine {
                 m->_srcY = in.py;
                 m->_dstY = in.py + TILE_HEIGHT;
                 m->_changeState(m, _moving, MOVING);
-                return {m->_srcX,m->_srcY,true,m->_movingBack};
+                
+                m->_ret.px = m->_srcX;
+                m->_ret.py = m->_srcY;
+                m->_ret.inMove = true;
+                m->_ret.movingBack = m->_movingBack;
+                return m->_ret;
             } else { //Move4
                 m->_moveFrames = HORI_SPEED;
                 m->_srcX = in.px;
@@ -34,7 +45,12 @@ namespace MoveMachine {
                 m->_srcY = in.py;
                 m->_dstY = in.py;
                 m->_changeState(m, _moving, MOVING);
-                return {m->_srcX,m->_srcY,true,m->_movingBack};
+                
+                m->_ret.px = m->_srcX;
+                m->_ret.py = m->_srcY;
+                m->_ret.inMove = true;
+                m->_ret.movingBack = m->_movingBack;
+                return m->_ret;
             };
         } else if(in.keys.Forw() && m->_canMoveForw(in.px)) {
             if(in.keys.keys.Move3 && m->_canMoveNear(in.py)) {
@@ -44,7 +60,12 @@ namespace MoveMachine {
                 m->_srcY = in.py;
                 m->_dstY = in.py - TILE_HEIGHT;
                 m->_changeState(m, _moving, MOVING);
-                return {m->_srcX,m->_srcY,true,m->_movingBack};
+                
+                m->_ret.px = m->_srcX;
+                m->_ret.py = m->_srcY;
+                m->_ret.inMove = true;
+                m->_ret.movingBack = m->_movingBack;
+                return m->_ret;
             } else if(in.keys.keys.Move9 && m->_canMoveFar(in.py)) {
                 m->_moveFrames = DIAG_SPEED;
                 m->_srcX = in.px;
@@ -52,7 +73,12 @@ namespace MoveMachine {
                 m->_srcY = in.py;
                 m->_dstY = in.py + TILE_HEIGHT;
                 m->_changeState(m, _moving, MOVING);
-                return {m->_srcX,m->_srcY,true,m->_movingBack};
+                
+                m->_ret.px = m->_srcX;
+                m->_ret.py = m->_srcY;
+                m->_ret.inMove = true;
+                m->_ret.movingBack = m->_movingBack;
+                return m->_ret;
             } else { //Move6
                 m->_moveFrames = HORI_SPEED;
                 m->_srcX = in.px;
@@ -60,7 +86,12 @@ namespace MoveMachine {
                 m->_srcY = in.py;
                 m->_dstY = in.py;
                 m->_changeState(m,_moving, MOVING);
-                return {m->_srcX,m->_srcY,true,m->_movingBack};
+                
+                m->_ret.px = m->_srcX;
+                m->_ret.py = m->_srcY;
+                m->_ret.inMove = true;
+                m->_ret.movingBack = m->_movingBack;
+                return m->_ret;
             };
         } else {
             if(in.keys.Near() && m->_canMoveNear(in.py)) {
@@ -70,7 +101,12 @@ namespace MoveMachine {
                 m->_srcY = in.py;
                 m->_dstY = in.py - TILE_HEIGHT;
                 m->_changeState(m, _moving, MOVING);
-                return {m->_srcX,m->_srcY,true,m->_movingBack};
+                
+                m->_ret.px = m->_srcX;
+                m->_ret.py = m->_srcY;
+                m->_ret.inMove = true;
+                m->_ret.movingBack = m->_movingBack;
+                return m->_ret;
             } else if(in.keys.Far() && m->_canMoveFar(in.py)) {
                 m->_moveFrames = VERT_SPEED;
                 m->_srcX = in.px;
@@ -78,14 +114,30 @@ namespace MoveMachine {
                 m->_srcY = in.py;
                 m->_dstY = in.py + TILE_HEIGHT;
                 m->_changeState(m, _moving, MOVING);
-                return {m->_srcX,m->_srcY,true,m->_movingBack};
+                
+                m->_ret.px = m->_srcX;
+                m->_ret.py = m->_srcY;
+                m->_ret.inMove = true;
+                m->_ret.movingBack = m->_movingBack;
+                return m->_ret;
             }
         }
         //no move
-        return {in.px,in.py,false,m->_movingBack};
+        m->_srcX = in.px;
+        m->_dstX = in.px;
+        m->_srcY = in.py;
+        m->_dstY = in.py; 
+
+        m->_ret.px = m->_srcX;
+        m->_ret.py = m->_srcY;
+        m->_ret.inMove = false;
+        m->_ret.movingBack = m->_movingBack;
+        return m->_ret;
     };
-    const Out Machine::_moving(StateMachine<In,Out>* sm, const In& in) {
+    const Out& Machine::_moving(StateMachine<In,Out>* sm, const In& in) {
         Machine* m = static_cast<Machine*>(sm);
+        m->_ret.clear();
+
         uint8_t curFrame = m->_currentFrame();
         if(curFrame >= m->_moveFrames) {
             m->_movingBack = false;
@@ -94,8 +146,15 @@ namespace MoveMachine {
             m->_srcY = m->_dstY;
             m->_dstX = m->_dstX;
             m->_dstY = m->_dstY;
-            return {m->_dstX,m->_dstY,false,m->_movingBack};
+
+            m->_ret.px = m->_dstX;
+            m->_ret.py = m->_dstY;
+            m->_ret.inMove = false;
+            m->_ret.movingBack = m->_movingBack;
+            return m->_ret;
         };
+
+        
         uint8_t curX, curY;
         if(m->_dstX < m->_srcX) {
             //Moving back
@@ -111,36 +170,24 @@ namespace MoveMachine {
             //Moving far
             curY = m->_srcY + (m->_dstY - m->_srcY) * (curFrame*1.0f/m->_moveFrames);
         }
-        return {curX,curY,true,m->_movingBack};
+
+        m->_ret.px = curX;
+        m->_ret.py = curY;
+        m->_ret.inMove = true;
+        m->_ret.movingBack = m->_movingBack;
+        return m->_ret;
     };
     size_t Machine::serialize(char* addr) {
         size_t offset = 0;
         State sEnum = (State) _currentEnum();
-        memcpy(addr,&sEnum,sizeof(sEnum));
-        offset+=sizeof(sEnum);
-
-        uint8_t frame = _currentFrame();
-        memcpy(addr+offset,&frame,sizeof(frame));
-        offset+=sizeof(frame);
-
-        memcpy(addr+offset, &_moveFrames,sizeof(_moveFrames));
-        offset+=sizeof(_moveFrames);
-
-        memcpy(addr+offset, &_srcX,sizeof(_srcX));
-        offset+=sizeof(_srcX);
-
-        memcpy(addr+offset, &_srcY,sizeof(_srcY));
-        offset+=sizeof(_srcY);
-
-        memcpy(addr+offset, &_dstX,sizeof(_dstX));
-        offset+=sizeof(_dstX);
-
-        memcpy(addr+offset, &_dstY,sizeof(_dstY));
-        offset+=sizeof(_dstY);
-
-        memcpy(addr+offset,&_movingBack,sizeof(_movingBack));
-        offset+=sizeof(_movingBack);
-
+        offset += serializeBytes(addr+offset, sEnum);
+        offset += serializeBytes(addr+offset,_currentFrame());
+        offset += serializeBytes(addr+offset,_moveFrames);
+        offset += serializeBytes(addr+offset,_srcX);
+        offset += serializeBytes(addr+offset,_srcY);
+        offset += serializeBytes(addr+offset,_dstX);
+        offset += serializeBytes(addr+offset,_dstY);
+        offset += serializeBytes(addr+offset,_movingBack);
         return offset;
     }
 

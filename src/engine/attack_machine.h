@@ -14,6 +14,12 @@ namespace AttackMachine {
         uint8_t hitStartX;
         uint8_t hitEndX;
         uint8_t hitY;
+        void clear() {
+            sprite = "";
+            hitStartX = 0;
+            hitEndX = 0;
+            hitY = 0;
+        };
     };
 
     class Machine : public StateMachine<In,Out> {
@@ -27,11 +33,12 @@ namespace AttackMachine {
 
             //vars
             bool _punching;
+            Out _ret;
 
             // state functions
-            static const Out _idle(StateMachine<In,Out>* sm, const In& in);
-            static const Out _windup(StateMachine<In,Out>* sm, const In& in);
-            static const Out _follow(StateMachine<In,Out>* sm, const In& in);
+            static const Out& _idle(StateMachine<In,Out>* sm, const In& in);
+            static const Out& _windup(StateMachine<In,Out>* sm, const In& in);
+            static const Out& _follow(StateMachine<In,Out>* sm, const In& in);
 
             // state enums;
             enum State : uint8_t {

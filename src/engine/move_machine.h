@@ -15,6 +15,12 @@ namespace MoveMachine {
         uint8_t px, py;
         bool inMove;
         bool movingBack;
+        void clear() {
+            px = 0;
+            py = 0;
+            inMove = false;
+            movingBack = false;
+        }
     };
     
     class Machine : public StateMachine<In,Out> {
@@ -32,11 +38,12 @@ namespace MoveMachine {
             uint8_t _dstX;
             uint8_t _dstY;
             bool _movingBack;
+            Out _ret;
 
 
             // state functions
-            static const Out _idle(StateMachine<In,Out>* sm, const In& in);
-            static const Out _moving(StateMachine<In,Out>* sm, const In& in);
+            static const Out& _idle(StateMachine<In,Out>* sm, const In& in);
+            static const Out& _moving(StateMachine<In,Out>* sm, const In& in);
 
             // state enum
             enum State : uint8_t {

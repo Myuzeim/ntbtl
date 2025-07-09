@@ -1,4 +1,6 @@
-// Very Rough! refactor later!
+// Very Rough! Refactor later!
+// This is a modified version of the "hello world" I could find for SDL
+// In the future, we may choose a different method entirely
 
 #define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
 #include <SDL3/SDL.h>
@@ -54,9 +56,7 @@ Uint32 GameLoop(void *userdata, SDL_TimerID timerID, Uint32 interval) {
         file1Out.line(gameIn.player1Keys);
         file2Out.line(gameIn.player2Keys);
 
-        /////////// The big step
         data = game.step(gameIn);
-        ///////////
     } else {
         //read from a file
         gameIn.player1Keys = file1In.line();

@@ -29,11 +29,11 @@ namespace PlayerMachine {
             MoveMachine::Machine _moveMachine;
             BlockMachine::Machine _blockMachine;
             AttackMachine::Machine _attackMachine;
+            Out _ret;
 
             // state functions
-            static Out _universal(StateMachine<In,Out>* sm, const In& in) {
+            static const Out& _universal(StateMachine<In,Out>* sm, const In& in) {
                 Machine* m = static_cast<Machine*>(sm);
-                Out ret;
                 MoveMachine::In moveIn;
                 moveIn.keys = in.keys;
                 moveIn.px = m->_px;
@@ -47,42 +47,42 @@ namespace PlayerMachine {
                 BlockMachine::Out blockOut = m->_blockMachine.step(blockIn);
                 
                 
-                ret.blocking = false;
-                ret.hitEndX = 0;
-                ret.hitStartX = 0;
-                ret.hitY = 0;
+                m->_ret.blocking = false;
+                m->_ret.hitEndX = 0;
+                m->_ret.hitStartX = 0;
+                m->_ret.hitY = 0;
                 if(moveOut.inMove) {
                     if(!moveOut.movingBack) {
                         AttackMachine::In attackIn;
                         attackIn.keys = in.keys;
                         AttackMachine::Out attackOut = m->_attackMachine.step(attackIn);
                         if(!strcmp(attackOut.sprite.c_str(),"Idle")) {
-                            ret.sprite = attackOut.sprite;
-                            ret.hitStartX = attackOut.hitStartX;
-                            ret.hitEndX = attackOut.hitEndX;
-                            ret.hitY = attackOut.hitY;
+                            m->_ret.sprite = attackOut.sprite;
+                            m->_ret.hitStartX = attackOut.hitStartX;
+                            m->_ret.hitEndX = attackOut.hitEndX;
+                            m->_ret.hitY = attackOut.hitY;
                         } else {
-                            ret.sprite = "Move";
+                            m->_ret.sprite = "Move";
                         }
                     } else {
-                        ret.sprite = "Move";
-                        ret.blocking = true;
+                        m->_ret.sprite = "Move";
+                        m->_ret.blocking = true;
                     }
                 } else if(blockOut.blocking) {
-                    ret.sprite = "Block";
-                    ret.blocking = true;
+                    m->_ret.sprite = "Block";
+                    m->_ret.blocking = true;
                 } else {
                     AttackMachine::In attackIn;
                     attackIn.keys = in.keys;
                     AttackMachine::Out attackOut = m->_attackMachine.step(attackIn);
-                    ret.sprite = attackOut.sprite;
-                    ret.hitStartX = attackOut.hitStartX;
-                    ret.hitEndX = attackOut.hitEndX;
-                    ret.hitY = attackOut.hitY;
+                    m->_ret.sprite = attackOut.sprite;
+                    m->_ret.hitStartX = attackOut.hitStartX;
+                    m->_ret.hitEndX = attackOut.hitEndX;
+                    m->_ret.hitY = attackOut.hitY;
                 }
-                ret.px = m->_px;
-                ret.py = m->_py;
-                return ret;
+                m->_ret.px = m->_px;
+                m->_ret.py = m->_py;
+                return m->_ret;
             };
 
             // state enum
@@ -126,19 +126,10 @@ namespace PlayerMachine {
             size_t serialize(char* addr) {
                 size_t offset = 0;
                 State sEnum = (State) _currentEnum();
-                memcpy(addr,&sEnum,sizeof(sEnum));
-                offset+=sizeof(sEnum);
-
-                uint8_t frame = _currentFrame();
-                memcpy(addr+offset,&frame,sizeof(frame));
-                offset+=sizeof(frame); 
-
-                memcpy(addr+offset,&_px,sizeof(_px));
-                offset+=sizeof(_px);
-
-                memcpy(addr+offset,&_py,sizeof(_py));
-                offset+=sizeof(_py);
-
+                offset += serializeBytes(addr+offset, sEnum);
+                offset += serializeBytes(addr+offset,_currentFrame());
+                offset += serializeBytes(addr+offset,_px);
+                offset += serializeBytes(addr+offset,_py);
                 offset += _moveMachine.serialize(addr+offset);
                 offset += _blockMachine.serialize(addr+offset);
                 offset += _attackMachine.serialize(addr+offset);

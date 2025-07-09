@@ -15,6 +15,12 @@ namespace GameMachine {
         PlayerMachine::Out player2Data;
         uint8_t player1hp;
         uint8_t player2hp;
+        void clear() {
+            player1Data = {};
+            player2Data = {};
+            player1hp = 0;
+            player2hp = 0;
+        };
     };
 
     class Machine : public StateMachine<In,Out> {
@@ -29,41 +35,44 @@ namespace GameMachine {
             // vars
             uint8_t _player1hp;
             uint8_t _player2hp;
+            Out _ret;
 
             // state functions
-            static Out _universal(StateMachine<In,Out>* sm, const In& in) {
+            static const Out& _universal(StateMachine<In,Out>* sm, const In& in) {
                 Machine* m = static_cast<Machine*>(sm);
-                Out ret;
+                m->_ret.clear();
+
                 InputMachine::Out player1Input = m->_player1Input.step(in.player1Keys);
                 InputMachine::Out player2Input = m->_player2Input.step(in.player2Keys);
                 PlayerMachine::In player1In, player2In;
                 player1In.keys = player1Input;
                 player2In.keys = player2Input;
-                ret.player1Data = m->_player1.step(player1In);
-                ret.player2Data = m->_player2.step(player2In);
+                m->_ret.player1Data = m->_player1.step(player1In);
+                m->_ret.player2Data = m->_player2.step(player2In);
 
                 //hit scan
-                if(ret.player1Data.hitY + ret.player1Data.py >= ret.player2Data.py + MoveMachine::Machine::TILE_HEIGHT && ret.player1Data.hitY + ret.player1Data.py <= ret.player2Data.py + 2 * MoveMachine::Machine::TILE_HEIGHT)
+                //TODO: refactor!
+                if(m->_ret.player1Data.hitY + m->_ret.player1Data.py >= m->_ret.player2Data.py + MoveMachine::Machine::TILE_HEIGHT && m->_ret.player1Data.hitY + m->_ret.player1Data.py <= m->_ret.player2Data.py + 2 * MoveMachine::Machine::TILE_HEIGHT)
                 {
-                    uint8_t real2Px = 4 * MoveMachine::Machine::TILE_WIDTH - ret.player2Data.px;
-                    if(real2Px > ret.player1Data.px + ret.player1Data.hitStartX && real2Px < ret.player1Data.px + ret.player1Data.hitEndX)
-                        if(!ret.player2Data.blocking)
-                            if(!(ret.player1Data.hitEndX == 0 && ret.player1Data.hitStartX && ret.player1Data.hitY)) //is there even an attack? 
+                    uint8_t real2Px = 4 * MoveMachine::Machine::TILE_WIDTH - m->_ret.player2Data.px;
+                    if(real2Px > m->_ret.player1Data.px + m->_ret.player1Data.hitStartX && real2Px < m->_ret.player1Data.px + m->_ret.player1Data.hitEndX)
+                        if(!m->_ret.player2Data.blocking)
+                            if(!(m->_ret.player1Data.hitEndX == 0 && m->_ret.player1Data.hitStartX && m->_ret.player1Data.hitY)) //is there even an attack? 
                                 m->_player2hp -= 10;
                 }
-                if(ret.player2Data.hitY + ret.player2Data.py >= ret.player1Data.py + MoveMachine::Machine::TILE_HEIGHT && ret.player2Data.hitY + ret.player2Data.py <= ret.player1Data.py + 2 * MoveMachine::Machine::TILE_HEIGHT)
+                if(m->_ret.player2Data.hitY + m->_ret.player2Data.py >= m->_ret.player1Data.py + MoveMachine::Machine::TILE_HEIGHT && m->_ret.player2Data.hitY + m->_ret.player2Data.py <= m->_ret.player1Data.py + 2 * MoveMachine::Machine::TILE_HEIGHT)
                 {
-                    uint8_t real2PxStart = 4 * MoveMachine::Machine::TILE_WIDTH - std::min(240,ret.player2Data.px + ret.player2Data.hitEndX);
-                    uint8_t real2PxEnd = 4 * MoveMachine::Machine::TILE_WIDTH - std::min(240,ret.player2Data.px + ret.player2Data.hitStartX);
-                    if(ret.player1Data.px > real2PxStart && ret.player1Data.px < real2PxEnd)
-                        if(!ret.player1Data.blocking)
-                            if(!(ret.player2Data.hitEndX == 0 && ret.player2Data.hitStartX && ret.player2Data.hitY)) //is there even an attack?
+                    uint8_t real2PxStart = 4 * MoveMachine::Machine::TILE_WIDTH - std::min(240,m->_ret.player2Data.px + m->_ret.player2Data.hitEndX);
+                    uint8_t real2PxEnd = 4 * MoveMachine::Machine::TILE_WIDTH - std::min(240,m->_ret.player2Data.px + m->_ret.player2Data.hitStartX);
+                    if(m->_ret.player1Data.px > real2PxStart && m->_ret.player1Data.px < real2PxEnd)
+                        if(!m->_ret.player1Data.blocking)
+                            if(!(m->_ret.player2Data.hitEndX == 0 && m->_ret.player2Data.hitStartX && m->_ret.player2Data.hitY)) //is there even an attack?
                                 m->_player1hp -= 10;
                 }
-                ret.player1hp = m->_player1hp;
-                ret.player2hp = m->_player2hp;
+                m->_ret.player1hp = m->_player1hp;
+                m->_ret.player2hp = m->_player2hp;
 
-                return ret;
+                return m->_ret;
             };
 
             // State Enum
@@ -81,19 +90,10 @@ namespace GameMachine {
             size_t serialize(char* addr) {
                 size_t offset = 0;
                 State sEnum = (State) _currentEnum();
-                memcpy(addr,&sEnum,sizeof(sEnum));
-                offset+=sizeof(sEnum);
-
-                uint8_t frame = _currentFrame();
-                memcpy(addr+offset,&frame,sizeof(frame));
-                offset+=sizeof(frame);
-
-                memcpy(addr+offset,&_player1hp,sizeof(_player1hp));
-                offset+=sizeof(_player1hp);
-
-                memcpy(addr+offset,&_player2hp,sizeof(_player2hp));
-                offset+=sizeof(_player2hp);
-
+                offset += serializeBytes(addr+offset, sEnum);
+                offset += serializeBytes(addr+offset,_currentFrame());
+                offset += serializeBytes(addr+offset,_player1hp);
+                offset += serializeBytes(addr+offset,_player2hp);
                 offset += _player1.serialize(addr+offset);
                 offset += _player2.serialize(addr+offset);
                 offset += _player1Input.serialize(addr+offset);

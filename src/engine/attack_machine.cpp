@@ -8,9 +8,11 @@ namespace AttackMachine {
         _changeState(this,_idle,IDLE);
     };
 
-    const Out Machine::_idle(StateMachine<In,Out>* sm, const In& in) {
+    const Out& Machine::_idle(StateMachine<In,Out>* sm, const In& in) {
         Machine* m = static_cast<Machine*>(sm);
         m->_punching = false;
+        m->_ret.clear();
+
         if(in.keys.keys.Attack1) {
             m->_punching = true;
             m->_changeState(m,_windup,WINDUP);
@@ -18,57 +20,79 @@ namespace AttackMachine {
             m->_punching = false;
             m->_changeState(m,_windup,WINDUP);
         }
-        return {"Idle",0,0,0};
+
+        m->_ret.sprite = "Idle";
+        return m->_ret;
     };
 
-    const Out Machine::_windup(StateMachine<In,Out>* sm, const In& in) {
+    const Out& Machine::_windup(StateMachine<In,Out>* sm, const In& in) {
         Machine* m = static_cast<Machine*>(sm);
+        m->_ret.clear();
+
         if(m->_punching) {
             if(m->_currentFrame() >= Machine::punchWindupSpeed) {
                 m->_changeState(m,_follow,FOLLOW);
-                return {"PunchFollow",0,MoveMachine::Machine::TILE_WIDTH * 2,MoveMachine::Machine::TILE_HEIGHT * 3 / 2};
+                
+                m->_ret.sprite = "PunchFollow";
+                m->_ret.hitStartX = 0;
+                m->_ret.hitEndX = MoveMachine::Machine::TILE_WIDTH * 2;
+                m->_ret.hitY = MoveMachine::Machine::TILE_HEIGHT * 3 / 2;
+                return m->_ret;
             }
-            return {"PunchWindup",0,0,0};
+
+            m->_ret.sprite = "PunchWindup";
+            return m->_ret;
         } else {
             if(m->_currentFrame() >= Machine::kickWindupSpeed) {
                 m->_changeState(m,_follow,FOLLOW);
-                return {"KickFollow",0,MoveMachine::Machine::TILE_WIDTH * 3,MoveMachine::Machine::TILE_HEIGHT * 3 / 2};
+
+                m->_ret.sprite = "KickFollow";
+                m->_ret.hitStartX = 0;
+                m->_ret.hitEndX = MoveMachine::Machine::TILE_WIDTH * 3;
+                m->_ret.hitY = MoveMachine::Machine::TILE_HEIGHT * 3 / 2;
+                return m->_ret;
             }
-            return {"KickWindup",0,0,0};
+
+            m->_ret.sprite = "KickWindup";
+            return m->_ret;
         }
     };
 
-    const Out Machine::_follow(StateMachine<In,Out>* sm, const In& in) {
+    const Out& Machine::_follow(StateMachine<In,Out>* sm, const In& in) {
         Machine* m = static_cast<Machine*>(sm);
+        m->_ret.clear();
+
         if(m->_punching) {
             if(m->_currentFrame() >= Machine::punchFollowSpeed) {
                 m->_punching = false;
                 m->_changeState(m,_idle,FOLLOW);
-                return {"Idle",0,0,0};
+
+                m->_ret.sprite = "Idle";
+                return m->_ret;
             }
-            return {"PunchFollow",0,0};
+
+            m->_ret.sprite = "PunchFollow";
+            return m->_ret;
         } else {
             if(m->_currentFrame() >= Machine::kickFollowSpeed) {
                 m->_punching = false;
                 m->_changeState(m,_idle,FOLLOW);
-                return {"Idle",0,0,0};
+
+                m->_ret.sprite = "Idle";
+                return m->_ret;
             }
-            return {"KickFollow",0,0};
+
+            m->_ret.sprite = "KickFollow";
+            return m->_ret;
         }
     };
 
     size_t Machine::serialize(char* addr) {    
         size_t offset = 0;
         State sEnum = (State) _currentEnum();
-        memcpy(addr,&sEnum,sizeof(sEnum));
-        offset+=sizeof(sEnum);
-
-        uint8_t frame = _currentFrame();
-        memcpy(addr+offset,&frame,sizeof(frame));
-        offset+=sizeof(frame); 
-
-        memcpy(addr+offset,&_punching,sizeof(_punching));
-        offset+=sizeof(_punching);
+        offset += serializeBytes(addr+offset, sEnum);
+        offset += serializeBytes(addr+offset,_currentFrame());
+        offset += serializeBytes(addr+offset,_punching);
 
         return offset;
     };

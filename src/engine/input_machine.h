@@ -5,7 +5,6 @@
 
 #include <memory>
 #include <functional>
-#include <cstring>
 
 namespace InputMachine {
     struct In {
@@ -25,7 +24,7 @@ namespace InputMachine {
 
     struct Out {
         In keys;
-        //include commands
+        //TODO: command inputs
         bool Back() const { return keys.Move1 || keys.Move4 || keys.Move7;};
         bool Vert() const { return keys.Move2 || keys.Move8;};
         bool Forw() const { return keys.Move3 || keys.Move6 || keys.Move9;};
@@ -37,8 +36,15 @@ namespace InputMachine {
     
     class Machine : public StateMachine<In,Out> {
         private:
+            //vars
+            Out _ret;
+
             //state functions
-            static Out _universal(StateMachine<In,Out>* sm, const In& in) {return {};};
+            static const Out& _universal(StateMachine<In,Out>* sm, const In& in) {
+                Machine* m = reinterpret_cast<Machine*>(sm);
+                m->_ret.keys = in;
+                return m->_ret;
+            };
             
             // state enum
             enum State : uint8_t {
@@ -49,22 +55,11 @@ namespace InputMachine {
                 _changeState(this, _universal, UNIVERSAL);
             };
 
-            const Out step(const In& in) {
-                StateMachine::step(in);
-                Out ret;
-                ret.keys = in;
-                return ret;
-            };
-
             size_t serialize(char* addr) {
                 size_t offset = 0;
                 State sEnum = (State) _currentEnum();
-                memcpy(addr,&sEnum,sizeof(sEnum));
-                offset+=sizeof(sEnum);
-
-                uint8_t frame = _currentFrame();
-                memcpy(addr+offset,&frame,sizeof(frame));
-                offset+=sizeof(frame);
+                offset += serializeBytes(addr+offset, sEnum);
+                offset += serializeBytes(addr+offset,_currentFrame());
 
                 return offset;
             };

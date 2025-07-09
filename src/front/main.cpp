@@ -44,10 +44,10 @@ Uint32 GameLoop(void *userdata, SDL_TimerID timerID, Uint32 interval) {
     
     // test serializing and deserializing
     // will game two have the same output in parallel?
-    char inputRegister[512];
-    size_t inputRegisterActive = 0;
-    game.serialize(inputRegister);
-    GameMachine::Machine game2(inputRegister,inputRegisterActive);
+    char inputBuffer[512];
+    size_t inputBufferActive = 0;
+    game.serialize(inputBuffer);
+    GameMachine::Machine game2(inputBuffer,inputBufferActive);
     game2.step(gameIn);
 
 
@@ -66,11 +66,12 @@ Uint32 GameLoop(void *userdata, SDL_TimerID timerID, Uint32 interval) {
     }
 
     //ok, now check the results
-    char outputRegister1[512], outputRegister2[512];
-    size_t outputLength = game.serialize(outputRegister1);
-    game2.serialize(outputRegister2);
+    char outputBuffer1[512], outputBuffer2[512];
+    size_t offset = game.serialize(outputBuffer1);
+    game2.serialize(outputBuffer2);
+    auto game3 = game;
 
-    if(memcmp(outputRegister1,outputRegister2,outputLength))
+    if(memcmp(outputBuffer1,outputBuffer2,offset - 1))
     {
         //desync
         SDL_Log("Serialization error!");

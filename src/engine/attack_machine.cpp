@@ -65,7 +65,7 @@ namespace AttackMachine {
         if(m->_punching) {
             if(m->_currentFrame() >= Machine::punchFollowSpeed) {
                 m->_punching = false;
-                m->_changeState(m,_idle,FOLLOW);
+                m->_changeState(m,_idle,IDLE);
 
                 m->_ret.sprite = "Idle";
                 return m->_ret;
@@ -76,7 +76,7 @@ namespace AttackMachine {
         } else {
             if(m->_currentFrame() >= Machine::kickFollowSpeed) {
                 m->_punching = false;
-                m->_changeState(m,_idle,FOLLOW);
+                m->_changeState(m,_idle,IDLE);
 
                 m->_ret.sprite = "Idle";
                 return m->_ret;
@@ -117,7 +117,7 @@ namespace AttackMachine {
         }
 
         uint8_t frame = *reinterpret_cast<uint8_t*>(addr+size);
-        size += sizeof(sEnum);
+        size += sizeof(frame);
         _changeFrameOnly(frame);
 
         _punching = *reinterpret_cast<uint8_t*>(addr+size);

@@ -41,6 +41,7 @@ class StateMachine {
         // Child classes should also implement a "deserialize" constructor with signature like:
         // Machine(char* addr, size_t size)
         // It should mirror this function
+        // size_t in both cases refers to an offset.
         virtual size_t serialize(char* addr) = 0;
 
     protected:

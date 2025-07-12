@@ -35,14 +35,16 @@ add_library(engine STATIC
 
 add_library(net STATIC 
     src/net/transaction.h
-    src/net/transaction.cpp)
+    src/net/transaction.cpp
+    src/net/history.h 
+    src/net/history.cpp)
 target_include_directories(net PUBLIC vendored/boost_1_82_0/boost/asio)
 
 ##################################
 
 add_executable(net_test src/net/test.cpp)
 target_include_directories(net PUBLIC vendored/boost_1_82_0/boost/asio)
-
+target_link_libraries(net_test PUBLIC net)
 
 include_directories(src/engine)
 add_executable(ntbtl src/front/main.cpp

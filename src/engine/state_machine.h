@@ -4,12 +4,15 @@
 #include <cstdint>
 #include <functional>
 #include <cstring>
+#include <unordered_map>
 
 template<typename In, typename Out>
 class StateMachine {
     private:
+        // serializable
         uint8_t _curFrame;
         uint8_t _stateEnum;
+        
         
     protected:
         typedef std::function<const Out&(StateMachine*,const In&)> State;
@@ -18,8 +21,7 @@ class StateMachine {
 
         // The "stateEnum" is for serialization (it should map to an "s" somewhere)
         // The state function "s" will actually be called
-        static void _changeState(StateMachine* m, const State& s, uint8_t stateEnum) {
-            m->_state = s;
+        static void _changeState(StateMachine* m, uint8_t stateEnum) {
             m->_curFrame = 0;
             m->_stateEnum = stateEnum;
         };
@@ -28,14 +30,17 @@ class StateMachine {
         void _changeFrameOnly(const uint8_t& c) {
             _curFrame = c;
         };
+
+        virtual void _initStateMap() = 0;
         
-    private:
-        State _state;
+        // nonserializable
+        std::unordered_map<uint8_t,State> _enumToStateFunction;
+
     public:
         // "Out" is live ONLY until you call step next.
         const Out& step(const In& in) { 
             _curFrame++; 
-            return _state(this, in);
+            return _enumToStateFunction[_stateEnum](this, in);
         };
 
         // Child classes should also implement a "deserialize" constructor with signature like:

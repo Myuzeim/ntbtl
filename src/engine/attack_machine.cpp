@@ -5,7 +5,8 @@
 namespace AttackMachine {
     Machine::Machine() {
         _punching = false;
-        _changeState(this,_idle,IDLE);
+        _initStateMap();
+        _changeState(this,IDLE);
     };
 
     const Out& Machine::_idle(StateMachine<In,Out>* sm, const In& in) {
@@ -15,10 +16,10 @@ namespace AttackMachine {
 
         if(in.keys.keys.Attack1) {
             m->_punching = true;
-            m->_changeState(m,_windup,WINDUP);
+            m->_changeState(m,WINDUP);
         } else if(in.keys.keys.Attack2) {
             m->_punching = false;
-            m->_changeState(m,_windup,WINDUP);
+            m->_changeState(m,WINDUP);
         }
 
         m->_ret.sprite = "Idle";
@@ -31,7 +32,7 @@ namespace AttackMachine {
 
         if(m->_punching) {
             if(m->_currentFrame() >= Machine::punchWindupSpeed) {
-                m->_changeState(m,_follow,FOLLOW);
+                m->_changeState(m,FOLLOW);
                 
                 m->_ret.sprite = "PunchFollow";
                 m->_ret.hitStartX = 0;
@@ -44,7 +45,7 @@ namespace AttackMachine {
             return m->_ret;
         } else {
             if(m->_currentFrame() >= Machine::kickWindupSpeed) {
-                m->_changeState(m,_follow,FOLLOW);
+                m->_changeState(m,FOLLOW);
 
                 m->_ret.sprite = "KickFollow";
                 m->_ret.hitStartX = 0;
@@ -65,7 +66,7 @@ namespace AttackMachine {
         if(m->_punching) {
             if(m->_currentFrame() >= Machine::punchFollowSpeed) {
                 m->_punching = false;
-                m->_changeState(m,_idle,IDLE);
+                m->_changeState(m,IDLE);
 
                 m->_ret.sprite = "Idle";
                 return m->_ret;
@@ -76,7 +77,7 @@ namespace AttackMachine {
         } else {
             if(m->_currentFrame() >= Machine::kickFollowSpeed) {
                 m->_punching = false;
-                m->_changeState(m,_idle,IDLE);
+                m->_changeState(m,IDLE);
 
                 m->_ret.sprite = "Idle";
                 return m->_ret;
@@ -100,17 +101,18 @@ namespace AttackMachine {
     //deserialize
     //size param is modified to increment the size of the object created
     Machine::Machine(char* addr, size_t& size) {
+        _initStateMap();
         State sEnum = *reinterpret_cast<State*>(addr+size);
         size += sizeof(sEnum);
         switch(sEnum) {
             case IDLE:
-                _changeState(this,_idle,IDLE);
+                _changeState(this,IDLE);
                 break;
             case WINDUP:
-                _changeState(this,_windup,WINDUP);
+                _changeState(this,WINDUP);
                 break;
             case FOLLOW:
-                _changeState(this,_follow,FOLLOW);
+                _changeState(this,FOLLOW);
                 break;
             default:
                 break; //error!
@@ -122,5 +124,11 @@ namespace AttackMachine {
 
         _punching = *reinterpret_cast<uint8_t*>(addr+size);
         size += sizeof(_punching);
+    };
+
+    void Machine::_initStateMap() {
+        _enumToStateFunction[IDLE] = _idle;
+        _enumToStateFunction[WINDUP] = _windup;
+        _enumToStateFunction[FOLLOW] = _follow;
     };
 };

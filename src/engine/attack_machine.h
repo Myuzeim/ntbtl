@@ -46,6 +46,9 @@ namespace AttackMachine {
                 WINDUP,
                 FOLLOW
             };
+
+            //helper
+            void _initStateMap();
             
         public:
             Machine();

@@ -56,7 +56,7 @@ namespace MoveMachine {
             bool _canMoveNear(const uint8_t& py) {return (py > TILE_HEIGHT / 2);};
             bool _canMoveForw(const uint8_t& px) {return (px < (TILE_WIDTH / 2) + TILE_WIDTH);};
             bool _canMoveBack(const uint8_t& px) {return (px > TILE_WIDTH / 2);};
-
+            void _initStateMap();
 
         public:
             static const uint8_t TILE_WIDTH = 60;

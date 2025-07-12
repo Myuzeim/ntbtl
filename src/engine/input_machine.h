@@ -50,9 +50,17 @@ namespace InputMachine {
             enum State : uint8_t {
                 UNIVERSAL
             };
+
+            // helper
+            void _initStateMap() {
+                _enumToStateFunction[UNIVERSAL] = _universal;
+            };
+
         public:
             Machine() {
-                _changeState(this, _universal, UNIVERSAL);
+                _initStateMap();
+                _changeState(this, UNIVERSAL);
+
             };
 
             size_t serialize(char* addr) {
@@ -67,11 +75,12 @@ namespace InputMachine {
             //deserialize
             //size param is modified to increment the size of the object created
             Machine(char* addr, size_t& size) {
+                _initStateMap();
                 State sEnum = *reinterpret_cast<State*>(addr+size);
                 size += sizeof(sEnum);
                 switch(sEnum) {
                     case UNIVERSAL:
-                        _changeState(this,_universal,UNIVERSAL);
+                        _changeState(this,UNIVERSAL);
                         break;
                     default:
                         break; //error!

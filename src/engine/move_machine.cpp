@@ -4,7 +4,8 @@
 namespace MoveMachine {
     Machine::Machine() {
         _movingBack = false;
-        _changeState(this,_idle,IDLE);
+        _initStateMap();
+        _changeState(this,IDLE);
     };
 
     const Out& Machine::_idle(StateMachine<In,Out>* sm, const In& in) {
@@ -18,7 +19,7 @@ namespace MoveMachine {
                 m->_dstX = in.px - TILE_WIDTH;
                 m->_srcY = in.py;
                 m->_dstY = in.py - TILE_HEIGHT;
-                m->_changeState(m, _moving, MOVING);
+                m->_changeState(m,  MOVING);
                 
                 m->_ret.px = m->_srcX;
                 m->_ret.py = m->_srcY;
@@ -31,7 +32,7 @@ namespace MoveMachine {
                 m->_dstX = in.px - TILE_WIDTH;
                 m->_srcY = in.py;
                 m->_dstY = in.py + TILE_HEIGHT;
-                m->_changeState(m, _moving, MOVING);
+                m->_changeState(m,  MOVING);
                 
                 m->_ret.px = m->_srcX;
                 m->_ret.py = m->_srcY;
@@ -44,7 +45,7 @@ namespace MoveMachine {
                 m->_dstX = in.px - TILE_WIDTH;
                 m->_srcY = in.py;
                 m->_dstY = in.py;
-                m->_changeState(m, _moving, MOVING);
+                m->_changeState(m,  MOVING);
                 
                 m->_ret.px = m->_srcX;
                 m->_ret.py = m->_srcY;
@@ -59,7 +60,7 @@ namespace MoveMachine {
                 m->_dstX = in.px + TILE_WIDTH;
                 m->_srcY = in.py;
                 m->_dstY = in.py - TILE_HEIGHT;
-                m->_changeState(m, _moving, MOVING);
+                m->_changeState(m,  MOVING);
                 
                 m->_ret.px = m->_srcX;
                 m->_ret.py = m->_srcY;
@@ -72,7 +73,7 @@ namespace MoveMachine {
                 m->_dstX = in.px + TILE_WIDTH;
                 m->_srcY = in.py;
                 m->_dstY = in.py + TILE_HEIGHT;
-                m->_changeState(m, _moving, MOVING);
+                m->_changeState(m,  MOVING);
                 
                 m->_ret.px = m->_srcX;
                 m->_ret.py = m->_srcY;
@@ -85,7 +86,7 @@ namespace MoveMachine {
                 m->_dstX = in.px + TILE_WIDTH;
                 m->_srcY = in.py;
                 m->_dstY = in.py;
-                m->_changeState(m,_moving, MOVING);
+                m->_changeState(m, MOVING);
                 
                 m->_ret.px = m->_srcX;
                 m->_ret.py = m->_srcY;
@@ -100,7 +101,7 @@ namespace MoveMachine {
                 m->_dstX = in.px;
                 m->_srcY = in.py;
                 m->_dstY = in.py - TILE_HEIGHT;
-                m->_changeState(m, _moving, MOVING);
+                m->_changeState(m,  MOVING);
                 
                 m->_ret.px = m->_srcX;
                 m->_ret.py = m->_srcY;
@@ -113,7 +114,7 @@ namespace MoveMachine {
                 m->_dstX = in.px;
                 m->_srcY = in.py;
                 m->_dstY = in.py + TILE_HEIGHT;
-                m->_changeState(m, _moving, MOVING);
+                m->_changeState(m,  MOVING);
                 
                 m->_ret.px = m->_srcX;
                 m->_ret.py = m->_srcY;
@@ -141,7 +142,7 @@ namespace MoveMachine {
         uint8_t curFrame = m->_currentFrame();
         if(curFrame >= m->_moveFrames) {
             m->_movingBack = false;
-            m->_changeState(m, _idle,IDLE);
+            m->_changeState(m, IDLE);
             m->_srcX = m->_dstX;
             m->_srcY = m->_dstY;
             m->_dstX = m->_dstX;
@@ -192,14 +193,15 @@ namespace MoveMachine {
     }
 
     Machine::Machine(char* addr, size_t& size) {
+        _initStateMap();
         State sEnum = *reinterpret_cast<State*>(addr+size);
         size += sizeof(sEnum);
         switch(sEnum) {
             case IDLE:
-                _changeState(this,_idle,IDLE);
+                _changeState(this,IDLE);
                 break;
             case MOVING:
-                _changeState(this,_moving,MOVING);
+                _changeState(this,MOVING);
                 break;
             default:
                 break; //error!
@@ -226,4 +228,9 @@ namespace MoveMachine {
         _movingBack = *reinterpret_cast<uint8_t*>(addr+size);
         size += sizeof(_movingBack);
     };
+
+    void Machine::_initStateMap() {
+        _enumToStateFunction[IDLE] = _idle;
+        _enumToStateFunction[MOVING] = _moving;
+    }
 };

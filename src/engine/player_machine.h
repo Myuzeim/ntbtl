@@ -90,20 +90,27 @@ namespace PlayerMachine {
                 UNIVERSAL
             };
 
+            // helper
+            void _initStateMap() {
+                _enumToStateFunction[UNIVERSAL] = _universal;
+            }
+
         public:
             Machine() {
                 _px = (MoveMachine::Machine::TILE_WIDTH / 2) * 3;
                 _py = (MoveMachine::Machine::TILE_HEIGHT / 2) * 3;
-                _changeState(this, _universal,UNIVERSAL);
+                _initStateMap();
+                _changeState(this, UNIVERSAL);
             };
             //deserialize
             //size param is modified to increment the size of the object created
             Machine(char* addr, size_t& size) {
+                _initStateMap();
                 State sEnum = *reinterpret_cast<State*>(addr+size);
                 size += sizeof(sEnum);
                 switch(sEnum) {
                     case UNIVERSAL:
-                        _changeState(this,_universal,UNIVERSAL);
+                        _changeState(this,UNIVERSAL);
                         break;
                     default:
                         break; //error!

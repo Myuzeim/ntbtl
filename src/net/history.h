@@ -1,84 +1,83 @@
 #ifndef HISTORY_H
-#define HISTORY_H
+#define HISTORY_h
 
-#include <cstddef>
-#include <array>
 #include <cstdint>
-#include <cstring>
+#include <array>
+#include "net_types.h"
 
 class History {
-    private:
-        ////////// Consts
-
-        // This should be big enough for a serialized game state
-        static const size_t GAME_SIZE = 512;
-
-        // This should be big enough for a serialized frame input
-        static const size_t INPUT_SIZE = 64;
-        
-        // How many frames back history goes
-        // Keep < 1/2 of size_t
-        static const size_t TRANSACTION_COUNT = 10;
-
     public:
-        // buffers
-        typedef std::array<uint8_t, GAME_SIZE> Game;
-        typedef std::array<uint8_t, INPUT_SIZE> Input;
-        typedef std::array<Input,TRANSACTION_COUNT> InputsHistory;
-        typedef std::array<Game,TRANSACTION_COUNT> GameHistory;
-
+        //typedefs and consts
+        static const uint32_t TRANSACTION_COUNT = 10;
+        static const uint32_t PLAYER_COUNT = 2;
+        static const uint32_t END_INDEX = 0 - 1;
+        enum Player : uint32_t  {
+            ONE = 0,
+            TWO = 1,
+            SPECTATE = 2
+        };
 
         struct Transaction {
-            // frame count
-            // 1 game = 99 sec * 30 fps ~= 3000 frames to process
-            size_t frame;
-
-            // did we receive an input for this frame?
+            NetTypes::Input in;
+            uint32_t frame;
             bool noOp;
 
-            // Irrelevant if NoOp.
-            // Remember to 0 out
-            Input in;
+            // only relevant if noOp is true
+            // only live until next addTransactions
+            // expected to be END_INDEX if noOp = false
+            uint32_t nextNoOpIndex;
         };
 
-        typedef std::array<Transaction,TRANSACTION_COUNT> TransactionHistory;
-
-        enum Player : size_t {
-            ONE = 0,
-            TWO = 1
+        struct GameState {
+            NetTypes::Game game;
+            uint32_t frame;
         };
 
+        typedef std::array<Transaction, TRANSACTION_COUNT> TransactionHistory;
+        typedef std::array<TransactionHistory, PLAYER_COUNT> PlayerTransactions;
+        typedef std::array<GameState,TRANSACTION_COUNT> GameHistory;
+        
+
+
+        // public functions
+
+        // run once per frame
+        // will forward transactions by one
+        // tran1 = player 1's
+        // tran2 = player 2's
+        // remember which player is 1 or 2 should be consistent across machines!
+        // will not forward if desynced. always check!
+        // returns false if desynced, true if synced 
+        bool addTransactions(const Transaction& tran1, const Transaction tran2, const GameState& prevGame);
+
+        // will not forward transactions
+        // returns index of start of reprocess
+        // assumes this transaction is NOT a noOp
+        uint32_t amendTransactions(const Transaction& tran, const Player& p);
+
+        // returns farthest back noOp
+        // check transaction for next noOp
+        // returns Transaction with frame max(uint32_t) if no noOps;
+        const Transaction getNoOps(const Player& p);
+
+        Transaction transactionAt(const uint32_t& index, const Player& p);
+        GameState& gameAt(const uint32_t& index);
+
+        History(const Player& local);
     private:
-        //////////// Member vars
 
-        // last in array is the most recent
+        // helper functions
+
+        // member vars
+        Player _local;
+        // Game history trails one behind Transactions
+        // e.g. current game[1] = game[0] + inputs[0]
+
+        // rewrites on append (optimal?)
         GameHistory _games;
 
-        // primary data structure
-        // last in array is most recent
-        std::array<TransactionHistory,2> _transactions;
-
-        // bucket helpers
-        GameHistory _gameBucket;
-        TransactionHistory _transactionBucket;
-
-        // Least recent newly filled in transaction
-        std::array<size_t,2> _askIndex;
-
-        // helper for inputBoth
-        void inputPlayer(const InputsHistory& inputs, const bool& noOp, const Player& p);
-    public:
-        History();
-
-        // Ideally you call for inputs for each player
-        // then you place output into the GameHistory
-        TransactionHistory::const_iterator askedInputsProcess(const Player& p);
-        GameHistory::iterator askedToProcess();
-
-        // expected every frame, even if there's no input
-        // (in that case noOp = true)
-        void inputBoth(const InputsHistory& inputs1, const bool& noOp1, const InputsHistory& inputs2, const bool& noOp2);
-        
+        // rewrites on append (optimal?)
+        PlayerTransactions _transactions;
 };
 
-#endif  //HISTORY_H
+#endif //HISTORY_H

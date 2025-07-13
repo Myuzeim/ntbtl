@@ -34,8 +34,8 @@ add_library(engine STATIC
 # can find here https://www.boost.org/releases/1.82.0/
 
 add_library(net STATIC 
-    src/net/transaction.h
-    src/net/transaction.cpp
+    src/net/net_types.h
+    src/net/net_types.cpp
     src/net/history.h 
     src/net/history.cpp)
 target_include_directories(net PUBLIC vendored/boost_1_82_0/boost/asio)
